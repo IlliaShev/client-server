@@ -10,6 +10,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
 
+import static ua.clientserver.utils.Constants.HEADER_LENGTH;
 import static ua.clientserver.utils.Constants.MAGIC_BYTE;
 import static ua.clientserver.utils.Functions.getArrayOfBytes;
 
@@ -48,8 +49,21 @@ public class Decoder {
     }
 
     private boolean isPacketCorrupted(Packet packet) throws Exception {
-        int packetwCrc16 = Crc16.getCrc16(encoder.formPacketPayLoad(packet.getPacketPayload()));
-        return packet.getWCrc16() != packet.getWCrc16_end() || packet.getWCrc16() != packetwCrc16;
+        int headerwCrc16 = Crc16.getCrc16(getHeaderBytes(packet));
+        int packetwCrc16_end = Crc16.getCrc16(encoder.formPacketPayLoad(packet.getPacketPayload()));
+        return packet.getWCrc16() != headerwCrc16 || packet.getWCrc16_end() != packetwCrc16_end;
+    }
+
+    private byte[] getHeaderBytes(Packet packet) {
+        ByteBuffer byteBuffer = ByteBuffer.allocate(HEADER_LENGTH);
+        byteBuffer.put(MAGIC_BYTE)
+                .put(packet.getBSrc())
+                .putLong(packet.getBPktId())
+                .putInt(packet.getWLen());
+        byte[] headerBytes = new byte[HEADER_LENGTH];
+        byteBuffer.rewind();
+        byteBuffer.get(headerBytes);
+        return headerBytes;
     }
 
     private PacketPayload decodePacketPayload(ByteBuffer byteBuffer, int wLen) throws Exception {

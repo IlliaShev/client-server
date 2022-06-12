@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 
+import static ua.clientserver.utils.Constants.HEADER_LENGTH;
 import static ua.clientserver.utils.Constants.MAGIC_BYTE;
 
 @NoArgsConstructor
@@ -26,16 +27,20 @@ public class Encoder {
                 .build();
         byte[] packetPayloadBytes = formPacketPayLoad(packetPayload);
 
-        int wCrc16 = Crc16.getCrc16(packetPayloadBytes);
+        int wCrc16_end = Crc16.getCrc16(packetPayloadBytes);
         ByteBuffer byteBuffer = ByteBuffer.allocate(Byte.BYTES * 18 + packetPayloadBytes.length);
         byte[] bytes = new byte[byteBuffer.remaining()];
         byteBuffer.put(MAGIC_BYTE)
                 .put(bSrc)
                 .putLong(packetId++)
                 .putInt(packetPayloadBytes.length);
+        byte[] headerBytes = new byte[HEADER_LENGTH];
+        byteBuffer.rewind();
+        byteBuffer.get(headerBytes);
+        int wCrc16 = Crc16.getCrc16(headerBytes);
         putwCrc16(byteBuffer, wCrc16);
         byteBuffer.put(packetPayloadBytes);
-        putwCrc16(byteBuffer, wCrc16);
+        putwCrc16(byteBuffer, wCrc16_end);
         byteBuffer.rewind();
         byteBuffer.get(bytes);
         return bytes;

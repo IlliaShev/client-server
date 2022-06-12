@@ -54,4 +54,12 @@ public class Practice1Tests {
         assertEquals("Crc16 is not matching", corruptedPacket.getMessage());
     }
 
+    @Test
+    public void fourthTest() throws Exception {
+        byte[] packetBytes = encoder.encode(message);
+        packetBytes[1] = (byte)(packetBytes[1] + 1);
+        CorruptedPacket corruptedPacket = Assertions.assertThrows(CorruptedPacket.class, () -> decoder.decode(packetBytes));
+        assertEquals("Crc16 is not matching", corruptedPacket.getMessage());
+    }
+
 }

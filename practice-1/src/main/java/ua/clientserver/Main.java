@@ -20,9 +20,16 @@ public class Main {
                 .priority(2)
                 .text("Text from Illia Shevchyk")
                 .build();
+        Message message2 = Message
+                .builder()
+                .author("Illia Shevchyk")
+                .priority(3)
+                .text("Text 2 from Illia Shevchyk")
+                .build();
         byte[] packetBytes = encoder.encode(message);
+        byte[] packetBytes2 = encoder.encode(message2);
 
-        Packet receivedPacket = decoder.decode(packetBytes);
+        Packet receivedPacket = decoder.decode(packetBytes2);
         System.out.println(decoder.getObjectFromPacket(receivedPacket));
     }
 }
