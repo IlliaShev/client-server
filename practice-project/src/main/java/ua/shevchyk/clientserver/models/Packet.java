@@ -1,4 +1,4 @@
-package ua.clientserver.models;
+package ua.shevchyk.clientserver.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
