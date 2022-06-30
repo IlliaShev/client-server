@@ -59,27 +59,21 @@ public class StoreClientTCP implements Runnable {
         System.out.println(Thread.currentThread().getName() + " start");
 
         try {
-            int attempt = 0;
-            while (true) {
+            connect();
+            MessageReceiver messageReceiver = new MessageReceiver(socket);
+            int clientId = (int) (Math.random() * 100000);
+            System.out.println("ClientId " + clientId);
+            byte[] messageToSend = encryptor.encrypt(message, SenderInfo.builder()
+                    .bSrc((byte) (Math.random() * 10))
+                    .clientId(clientId)
+                    .cType(message.getCommand().ordinal())
+                    .build());
+            messageReceiver.send(messageToSend);
 
-                connect();
-                MessageReceiver messageReceiver = new MessageReceiver(socket);
-
-                int clientId = (int) (Math.random() * 100000);
-                System.out.println("ClientId " + clientId);
-                byte[] messageToSend = encryptor.encrypt(message, SenderInfo.builder()
-                        .bSrc((byte) (Math.random() * 10))
-                        .clientId(clientId)
-                        .cType(message.getCommand().ordinal())
-                        .build());
-                messageReceiver.send(messageToSend);
-
-                byte[] byteResponse = messageReceiver.receive();
-                Packet packet = decryptor.decrypt(byteResponse);
-                Message response = (Message) Converter.getObject(packet.getPacketPayload().getPayload());
-                System.out.println("Response from server " + response);
-                return;
-            }
+            byte[] byteResponse = messageReceiver.receive();
+            Packet packet = decryptor.decrypt(byteResponse);
+            Message response = (Message) Converter.getObject(packet.getPacketPayload().getPayload());
+            System.out.println("Response from server " + response);
 
         } catch (Exception e) {
             e.printStackTrace();

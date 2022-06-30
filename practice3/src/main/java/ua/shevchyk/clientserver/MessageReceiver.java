@@ -13,10 +13,6 @@ public class MessageReceiver {
     private final InputStream inputStream;
     private final OutputStream outputStream;
 
-    private final Semaphore outputStreamLock = new Semaphore(1);
-    private final Semaphore inputStreamLock = new Semaphore(1);
-
-
     public MessageReceiver(Socket socket) throws IOException {
         this.socket = socket;
         inputStream = socket.getInputStream();
@@ -25,36 +21,26 @@ public class MessageReceiver {
 
 
     public byte[] receive() throws IOException {
-        try {
-            inputStreamLock.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        byte[] packetBytes = new byte[0];
+        int waitingClock = 0;
 
-        try {
-            byte[] packetBytes = new byte[0];
-            int waitingClock = 0;
-
-            while (true) {
-                if (inputStream.available() == 0) {
-                    if(++waitingClock > MAX_TRIES) {
-                        return packetBytes;
-                    }
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    continue;
+        while (true) {
+            if (inputStream.available() == 0) {
+                if(++waitingClock > MAX_TRIES) {
+                    return packetBytes;
                 }
-
-                byte[] bytesToAdd = inputStream.readNBytes(inputStream.available());
-                packetBytes = addBytes(packetBytes, bytesToAdd);
-                waitingClock = 0;
-                return packetBytes;
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                continue;
             }
-        } finally {
-            inputStreamLock.release();
+
+            byte[] bytesToAdd = inputStream.readNBytes(inputStream.available());
+            packetBytes = addBytes(packetBytes, bytesToAdd);
+            waitingClock = 0;
+            return packetBytes;
         }
     }
 
@@ -66,14 +52,7 @@ public class MessageReceiver {
     }
 
     public void send(byte[] msg) throws IOException {
-        try {
-            outputStreamLock.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         outputStream.write(msg);
-
-        outputStreamLock.release();
     }
 
     public void shutdown() {
